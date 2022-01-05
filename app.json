@@ -1,8 +1,8 @@
 {
   "expo": {
-    "name": "ASMR_Player2.0",
-    "slug": "ASMR_Player2.0",
-    "version": "1.0.0",
+    "name": "ASMR_Player2",
+    "slug": "ASMR_Player2",
+    "version": "1.4.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "splash": {
@@ -16,14 +16,24 @@
     "assetBundlePatterns": [
       "**/*"
     ],
+    "usesNonExemptEncryption": false,
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": true,
+      "buildNumber": "1",
+      "bundleIdentifier": "com.ruoqihuang.asmrplayer",
+      "infoPlist": {
+        "UIBackgroundModes": [
+          "audio"
+        ]
+      }
+
     },
     "android": {
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#FFFFFF"
-      }
+      },
+      "package": "com.ruoqihuang.asmrplayer"
     },
     "web": {
       "favicon": "./assets/favicon.png"
