@@ -10,6 +10,7 @@ import { createBottomTabNavigator } from '@react-navigation/bottom-tabs'
 import Player from './components/Player.jsx'
 import Library from './components/Library.jsx'
 import Settings from './components/Settings.jsx'
+import { useFonts } from 'expo-font';
 
 const Tab = createBottomTabNavigator();
 const Stack = createNativeStackNavigator();
@@ -50,6 +51,11 @@ function TabScreen({navigation}) {
 }
 
 export default function App() {
+	const [loaded] = useFonts({
+    Bomb: require('./assets/bomb.ttf'),
+  });
+
+	if (!loaded) return null;
   return (
     <NavigationContainer>
       <Stack.Navigator>
