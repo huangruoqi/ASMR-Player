@@ -7,6 +7,7 @@ import { createNativeStackNavigator } from '@react-navigation/native-stack'
 import { List, Avatar } from 'react-native-paper'
 import AsyncStorage from '@react-native-async-storage/async-storage'
 import Status from './Status.jsx'
+import Animation from './Animation.jsx';
 import Animated,{
 	withTiming,
 	useSharedValue,
@@ -29,6 +30,7 @@ export default function Player({route}) {
 			g : Math.random()*128 + 100,
 			b : Math.random()*128 + 128,
 		})))
+	const [refs, setRefs] = React.useState(new Array(100).fill(0).map(() => React.useRef(null)))
 	
 	const [duration, setDuration] = React.useState(1)
 	const [current, setCurrent] = React.useState(0)
@@ -99,37 +101,61 @@ export default function Player({route}) {
 		setCurrent(res.positionMillis)
 	}
 
-
-
 	const o_progress = useSharedValue(0);
 	const x_progress = useSharedValue(0);
 	const y_progress = useSharedValue(0);
 	const t_progress = useSharedValue(0);
 	const rStyle = useAnimatedStyle(() => {
-		const y_pos = y_progress.value+800*t_progress.value**2 - 700*t_progress.value;
+		const h = height - 286;
+		const a = 800;
+		const c = 0.25;
+		const k = y_progress.value - 50;
+		let y_pos = a*(t_progress.value-c)**2 + k;
+		const t0 = Math.sqrt((h - k)/a) + c;
+		if (t_progress.value <= t0) {
+			return (
+				{
+					opacity: o_progress.value,
+					transform:[
+						{translateX: x_progress.value},
+						{translateY: y_pos},
+					]
+				}
+			)
+		}
+		const vf = 2*a*(t0-c);
+		const time_intervals = [t0, vf/a/2 + t0];
+		for (let i = 0; i < 5; i++) {
+			time_intervals.push((time_intervals[i + 1] - time_intervals[i])/2 + time_intervals[i + 1])
+		}
+		for (let i = 1; i < 7; i++) {
+			if (t_progress.value <= time_intervals[i]) {
+				const _k = -a*((time_intervals[i] - time_intervals[i - 1])/2)**2;
+				y_pos = a*((t_progress.value-time_intervals[i-1]) -(time_intervals[i] - time_intervals[i - 1])/2)**2 + _k + h;
+				break;
+			}
+		}
 		return (
 			{
 				opacity: o_progress.value,
 				transform:[
 					{translateX: x_progress.value},
-					{translateY: y_pos > height - 150 ? height : y_pos},
+					{translateY: y_pos},
 				]
 			}
 		)
 	})
 
-	let animationDone = true;
 	function startAnimation(x,y) {
-		if (!animationDone) return;
 		x_progress.value = x;
 		y_progress.value = y;
 		o_progress.value = 0;
-		t_progress.value = 0.25;
+		t_progress.value = 0;
 		o_progress.value = withTiming(1, {duration:500})
-		x_progress.value = withTiming(x>width/2? 30 : width - 50, {duration:1200});
-		t_progress.value = withTiming(2, {duration:1800});
-	
+		x_progress.value = withTiming(x>width/2? 30 : width - 50, {duration:2000});
+		t_progress.value = withTiming(3, {duration:3000});
 	}
+
 	function render(props){
 		const {item} = props;
 		const {r,g,b} = colors[item.id];
@@ -141,12 +167,16 @@ export default function Player({route}) {
 				paddingLeft: item.id%2==0?BLANK_SPACE: BLANK_SPACE / 2, 
 				paddingRight: item.id%2==1?BLANK_SPACE: BLANK_SPACE / 2, 
 				height: width / 2, 
-				width: width / 2
+				width: width / 2,
+				zIndex: 1,
 			}}>
-				<Pressable style={{padding: 20, flex: 1 ,backgroundColor: `rgb(${r}, ${g}, ${b})`, borderRadius: 50}}
+				<Animation animate={refs[item.id]} leftItem={item.id%2==0}></Animation>
+				<Pressable style={{padding: 20, flex: 1 ,backgroundColor: `rgba(${r}, ${g}, ${b}, 0.5)`, borderRadius: 50}}
+				onLongPress={() => refs[item.id].current(false)}
 				onPress={({nativeEvent}) => {
-					item.func(nativeEvent.pageX-50,nativeEvent.pageY-50);
+					item.func(nativeEvent.pageX-20,nativeEvent.pageY-100);
 					playmp3(item.filename);
+					refs[item.id].current(true);
 				}}>
 					<View style={{flex:1, }}>
 						<Text style={{fontSize:20, fontFamily: 'Bomb', color: `rgb(${r - 120}, ${g - 100}, ${b - 120})`}}>Nature</Text>
@@ -215,5 +245,6 @@ const styles = StyleSheet.create({
   	borderWidth: 1,
   	margin: 5, 
   	borderColor: '#e0e0e0',
+		zIndex:100
   }
 });
